@@ -12,6 +12,11 @@ bool led4Status = false;
 String ledR_s, ledG_s, ledB_s = "";
 String ledRGB_s = "000000000";
 int ledR_int, ledG_int, ledB_int = 0;
+///////////SWITCHES////////////
+bool switch1Status = false;
+bool switch2Status = false;
+bool switch3Status = false;
+bool switch4Status = false;
 /////////PRESSURE/////////
 SFE_BMP180 pressure;
 char status;
@@ -227,10 +232,35 @@ void loop() {
                 led4Status = true;
                 Serial.println("Led4 ON");
               }
-              if(readString.indexOf("led4=1") >0) {
+               if(readString.indexOf("switch1=0") >0) {
+                digitalWrite(4, LOW);
+                switch1Status = false;
+                Serial.println("switch1 OFF");
+              }
+              if(readString.indexOf("switch1=1") >0) {
                 digitalWrite(4, HIGH);
-                led4Status = true;
-                Serial.println("Led4 ON");
+                switch1Status = true;
+                Serial.println("switch1 ON");
+              }
+               if(readString.indexOf("switch2=0") >0) {
+                digitalWrite(4, LOW);
+                switch2Status = false;
+                Serial.println("switch2 OFF");
+              }
+              if(readString.indexOf("switch2=1") >0) {
+                digitalWrite(4, HIGH);
+                switch2Status = true;
+                Serial.println("switch2 ON");
+              }
+               if(readString.indexOf("switch3=0") >0) {
+                digitalWrite(4, LOW);
+                switch3Status = false;
+                Serial.println("switch3 OFF");
+              }
+              if(readString.indexOf("switch3=1") >0) {
+                digitalWrite(4, HIGH);
+                switch3Status = true;
+                Serial.println("switch3 ON");
               }
               if(readString.indexOf("ledRGB=") >0) {
                 ledR_s = (readString.substring(13,16));
@@ -259,11 +289,11 @@ void loop() {
               client.print("\",\"ledRGB\":\"");
               client.print(ledRGB_s);
               client.print("\",\"switch1\":\"");
-              client.print(0);
+              client.print(switch1Status);
               client.print("\",\"switch2\":\"");
-              client.print(0);
+              client.print(switch2Status);
               client.print("\",\"switch3\":\"");
-              client.print(0);
+              client.print(switch3Status);
               client.print("\"}}");
               client.println();
               break;
@@ -312,7 +342,7 @@ void loop() {
       }
     }
     // give the web browser time to receive the data
-    delay(10);
+    delay(1);
     // close the connection:
     client.stop();
     readString = "";
