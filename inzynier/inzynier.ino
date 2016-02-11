@@ -10,8 +10,10 @@ bool led2Status = false;
 bool led3Status = false;
 bool led4Status = false;
 String ledR_s, ledG_s, ledB_s = "";
-String ledRGB_s = "000000000";
-int ledR_int, ledG_int, ledB_int = 0;
+String ledRGB_s = "000163232";
+int ledR_int = 0;
+int ledG_int = 0;
+int ledB_int = 0;
 ///////////SWITCHES////////////
 bool switch1Status = false;
 bool switch2Status = false;
@@ -266,13 +268,13 @@ void loop() {
                 ledR_s = (readString.substring(13,16));
                 ledG_s = (readString.substring(16,19));
                 ledB_s = (readString.substring(19,22));
-                Serial.println("RGB Strip:");
-                Serial.println(ledB_s);
+                Serial.println("RGB Strip: ");
                 ledRGB_s = ledR_s+ledG_s+ledB_s;
-                Serial.println(ledRGB_s);
+                Serial.print(ledRGB_s);
                 ledR_int = ledR_s.toInt();
                 ledG_int = ledG_s.toInt();
                 ledB_int = ledB_s.toInt();
+                ///////////////////////////////////////USTAWIC RGB STRIPA//////////////////////////////////
               }
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: application/json;charset=utf-8");
