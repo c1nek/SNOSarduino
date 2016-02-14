@@ -14,6 +14,9 @@ String ledRGB_s = "000163232";
 int ledR_int = 0;
 int ledG_int = 0;
 int ledB_int = 0;
+int ledPinR = 8; 
+int ledPinG = 9; 
+int ledPinB = 7; 
 ///////////SWITCHES////////////
 bool switch1Status = false;
 bool switch2Status = false;
@@ -48,7 +51,7 @@ int GasSensorPin = A2;
 int GasSensorValue = 0;
 ///////////////////////////////////
 /////////ETHERNET///////////
-char serverIP[] = "83.20.161.116";
+char serverIP[] = "snos.ddns.net";
 bool isConnectedToServer = false;
 int connectionsToServer = 1;
 int serverPort = 2137;
@@ -93,8 +96,44 @@ void setup() {
     default: Serial.println("Unknown error");
     break;
   }
-  pinMode(7, OUTPUT);
-  digitalWrite(7, LOW);
+  pinMode(6, OUTPUT);
+  digitalWrite(6, LOW);
+
+  pinMode(ledPinR, OUTPUT);
+  pinMode(ledPinG, OUTPUT);
+  pinMode(ledPinB, OUTPUT);
+
+/*
+   for (int r = 0; r < 256; r++) { 
+    analogWrite(ledPinR, r);
+    delay(10);
+  } 
+  // fade from violet to red
+  for (int b = 255; b > 0; b--) { 
+    analogWrite(ledPinB, b);
+    delay(10);
+  } 
+  // fade from red to yellow
+  for (int g = 0; g < 256; g++) { 
+    analogWrite(ledPinG, g);
+    delay(10);
+  } 
+  // fade from yellow to green
+  for (int r = 255; r > 0; r--) { 
+    analogWrite(ledPinR, r);
+    delay(10);
+  } 
+  // fade from green to teal
+  for (int b = 0; b < 256; b++) { 
+    analogWrite(ledPinB, b);
+    delay(10);
+  } 
+  // fade from teal to blue
+  for (int g = 255; g > 0; g--) { 
+    analogWrite(ledPinG, g);
+    delay(10);
+  } 
+  */
   delay(1000);
   bool isConnectedToServer = false;
   String httpWToken = "";
@@ -105,7 +144,7 @@ void setup() {
     if (client.connect(serverIP, serverPort)) {
       Serial.println("\nConnected to server.");
       client.println("GET /arduino?id="+deviceID+" HTTP/1.1");
-      client.println("Host: 83.20.162.171");
+      client.println("Host: snos.ddns.net");
       client.println("Content-Type: application/text");
       client.println();
       while(true) {
@@ -153,10 +192,10 @@ void loop() {
         status = pressure.getPressure(P,T);
         if (status != 0) {
           P=P*33.885;
-        } else Serial.println("Error retrieving pressure.");
-      } else Serial.println("Error starting pressure.");
-    } else Serial.println("Error retrieving temperature.");
-  } else Serial.println("Error starting temperature.");
+        } //else //Serial.println("Error retrieving pressure.");
+      } //else //Serial.println("Error starting pressure.");
+    } //else //Serial.println("Error retrieving temperature.");
+  } //else //Serial.println("Error starting temperature.");
   ///////////////////////////////////////////////////
   if(digitalRead(PirPin1) == HIGH) {
     Pir1Value = true;
@@ -195,12 +234,12 @@ void loop() {
             Serial.println(readString);
             if(readString.indexOf('&') >=0) {
               if(readString.indexOf("led1=0") >0) {
-                digitalWrite(7, LOW);
+                digitalWrite(6, LOW);
                 led1Status = false;
                 Serial.println("Led1 OFF");
               }
               if(readString.indexOf("led1=1") >0) {
-                digitalWrite(7, HIGH);
+                digitalWrite(6, HIGH);
                 led1Status = true;
                 Serial.println("Led1 ON");
               }
@@ -274,6 +313,9 @@ void loop() {
                 ledR_int = ledR_s.toInt();
                 ledG_int = ledG_s.toInt();
                 ledB_int = ledB_s.toInt();
+                analogWrite(ledPinR, 255-ledR_int);
+                analogWrite(ledPinG, 255-ledG_int);
+                analogWrite(ledPinB, 255-ledB_int);
                 ///////////////////////////////////////USTAWIC RGB STRIPA//////////////////////////////////
               }
               client.println("HTTP/1.1 200 OK");
@@ -315,6 +357,7 @@ void loop() {
               client.print(Pir2Value);
               client.print(Pir3Value);
               client.print(Pir4Value);
+              //client.print("0000");
               client.print("\",\"tempInside\":\"");
               client.print(DHT11.temperature);
               client.print("\",\"humInside\":\"");
