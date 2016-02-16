@@ -51,7 +51,7 @@ int GasSensorPin = A2;
 int GasSensorValue = 0;
 ///////////////////////////////////
 /////////ETHERNET///////////
-char serverIP[] = "snos.ddns.net";
+char serverIP[] = "snos.pl";
 bool isConnectedToServer = false;
 int connectionsToServer = 1;
 int serverPort = 2137;
@@ -70,6 +70,9 @@ void setup() {
   Serial.begin(9600);
   Serial.println("############ARDIUNO############");
   Serial.println("########DzordanDev2016#########");
+  Serial.println("######Projekt inżynierski######");
+  Serial.println("#Marcin Gluza # Jakub Ratajski#");
+  Serial.println("##Politechnika Poznańska 2016##\n");
   Ethernet.begin(mac, ip, dnss, gateway, subnet);
   Serial.print("\nConfiguring Ethernet ");
   for (int i = 0; i < 20; i++) {
@@ -145,7 +148,7 @@ void setup() {
     if (client.connect(serverIP, serverPort)) {
       Serial.println("\nConnected to server.");
       client.println("GET /arduino?id="+deviceID+" HTTP/1.1");
-      client.println("Host: snos.ddns.net");
+      client.println("Host: snos.pl");
       client.println("Content-Type: application/text");
       client.println();
       while(true) {
@@ -315,6 +318,7 @@ void loop() {
                 Serial.print("RGB Strip: ");
                 ledRGB_s = ledR_s+ledG_s+ledB_s;
                 Serial.print(ledRGB_s);
+                Serial.print("\n");
                 ledR_int = ledR_s.toInt();
                 ledG_int = ledG_s.toInt();
                 ledB_int = ledB_s.toInt();
@@ -362,7 +366,6 @@ void loop() {
               client.print(Pir2Value);
               client.print(Pir3Value);
               client.print(Pir4Value);
-              //client.print("0000");
               client.print("\",\"tempInside\":\"");
               client.print(DHT11.temperature);
               client.print("\",\"humInside\":\"");
@@ -382,18 +385,14 @@ void loop() {
             break;
           }
           if (c == '\n') {
-            // you're starting a new line
             currentLineIsBlank = true;
           } else if (c != '\r') {
-            // you've gotten a character on the current line
             currentLineIsBlank = false;
           }
         }
       }
     }
-    // give the web browser time to receive the data
     delay(10);
-    // close the connection:
     client.stop();
     readString = "";
   }
