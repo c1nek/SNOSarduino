@@ -64,6 +64,7 @@ EthernetServer server(80);
 EthernetClient client;
 String token;
 String readString;
+int getcounter=0;
 //////////////////////
 void setup() {
   Serial.begin(9600);
@@ -231,6 +232,10 @@ void loop() {
         readString += c;
         if (c == '\n' && currentLineIsBlank) {
           if(readString.indexOf(token) >=0) {
+            getcounter++;
+            Serial.print("[");
+            Serial.print(getcounter);
+            Serial.print("] ");
             Serial.println(readString);
             if(readString.indexOf('&') >=0) {
               if(readString.indexOf("led1=0") >0) {
@@ -307,7 +312,7 @@ void loop() {
                 ledR_s = (readString.substring(13,16));
                 ledG_s = (readString.substring(16,19));
                 ledB_s = (readString.substring(19,22));
-                Serial.println("RGB Strip: ");
+                Serial.print("RGB Strip: ");
                 ledRGB_s = ledR_s+ledG_s+ledB_s;
                 Serial.print(ledRGB_s);
                 ledR_int = ledR_s.toInt();
@@ -316,7 +321,7 @@ void loop() {
                 analogWrite(ledPinR, 255-ledR_int);
                 analogWrite(ledPinG, 255-ledG_int);
                 analogWrite(ledPinB, 255-ledB_int);
-                ///////////////////////////////////////USTAWIC RGB STRIPA//////////////////////////////////
+                delay(10);
               }
               client.println("HTTP/1.1 200 OK");
               client.println("Content-Type: application/json;charset=utf-8");
@@ -387,7 +392,7 @@ void loop() {
       }
     }
     // give the web browser time to receive the data
-    delay(1);
+    delay(10);
     // close the connection:
     client.stop();
     readString = "";
