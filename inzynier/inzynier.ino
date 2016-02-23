@@ -3,7 +3,10 @@
 #include <dht11.h>
 #include <SPI.h>
 #include <Ethernet.h>
-const String deviceID = "dzordandev2016";
+const String DEVICE_ID = "dzordandev2016";
+const int LOOP_COUNTER_TO_RECONNECT = 1000;
+int loopCounter = 0;
+
 ///////////LEDS////////////
 bool led1Status = false;
 bool led2Status = false;
@@ -17,18 +20,22 @@ int ledB_int = 0;
 int ledPinR = 8; 
 int ledPinG = 9; 
 int ledPinB = 7; 
+
 ///////////SWITCHES////////////
 bool switch1Status = false;
 bool switch2Status = false;
 bool switch3Status = false;
 bool switch4Status = false;
+
 /////////PRESSURE/////////
 SFE_BMP180 pressure;
 char status;
 double T,P;
+
 ///////DHT11////////////////
 dht11 DHT11;
 #define DHT11PIN 41
+
 ///////MOTION SENSORS///////
 int PirPin1 = 2;
 bool Pir1Value = false;
@@ -40,21 +47,26 @@ int PirPin4 = 5;
 bool Pir4Value = false;
 //////////DHT11/////////////
 #define DHTPIN 2
+
 /////////FIRE SENSOR///////////
 int FireSensorPin = A0;
 int FireSensorValue = 0;
+
 ///////WATER LEVEL SENSOR///////
 int WaterSensorPin = A1;
 int WaterSensorValue = 0;
+
 /////////GAS SENSOR/////////////
 int GasSensorPin = A2;
 int GasSensorValue = 0;
-///////////////////////////////////
+
+
 /////////ETHERNET///////////
-char serverIP[] = "snos.pl";
+const char SERVER_IP[] = "164.132.111.23";
+const int SERVER_PORT = 8080;
 bool isConnectedToServer = false;
 int connectionsToServer = 1;
-int serverPort = 2137;
+
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 byte ip[] = {192, 168, 1, 150};
 byte gateway[] = {192, 168, 1, 1};
@@ -65,14 +77,13 @@ EthernetClient client;
 String token;
 String readString;
 int getcounter=0;
-//////////////////////
+
+
+
 void setup() {
   Serial.begin(9600);
   Serial.println("############ARDIUNO############");
   Serial.println("########DzordanDev2016#########");
-  Serial.println("######Projekt inżynierski######");
-  Serial.println("#Marcin Gluza # Jakub Ratajski#");
-  Serial.println("##Politechnika Poznańska 2016##\n");
   Ethernet.begin(mac, ip, dnss, gateway, subnet);
   Serial.print("\nConfiguring Ethernet ");
   for (int i = 0; i < 20; i++) {
@@ -106,57 +117,27 @@ void setup() {
   pinMode(ledPinR, OUTPUT);
   pinMode(ledPinG, OUTPUT);
   pinMode(ledPinB, OUTPUT);
-
-/*
-   for (int r = 0; r < 256; r++) { 
-    analogWrite(ledPinR, r);
-    delay(10);
-  } 
-  // fade from violet to red
-  for (int b = 255; b > 0; b--) { 
-    analogWrite(ledPinB, b);
-    delay(10);
-  } 
-  // fade from red to yellow
-  for (int g = 0; g < 256; g++) { 
-    analogWrite(ledPinG, g);
-    delay(10);
-  } 
-  // fade from yellow to green
-  for (int r = 255; r > 0; r--) { 
-    analogWrite(ledPinR, r);
-    delay(10);
-  } 
-  // fade from green to teal
-  for (int b = 0; b < 256; b++) { 
-    analogWrite(ledPinB, b);
-    delay(10);
-  } 
-  // fade from teal to blue
-  for (int g = 255; g > 0; g--) { 
-    analogWrite(ledPinG, g);
-    delay(10);
-  } 
-  */
+  
   delay(1000);
   bool isConnectedToServer = false;
-  String httpWToken = "";
+  String httpToken = "";
   while(!isConnectedToServer) {
     Serial.print("\nConnecting to server.[");
     Serial.print(connectionsToServer);
     Serial.print("]");
-    if (client.connect(serverIP, serverPort)) {
+    if (client.connect(SERVER_IP, SERVER_PORT)) {
       Serial.println("\nConnected to server.");
-      client.println("GET /arduino?id="+deviceID+" HTTP/1.1");
+      client.println("GET /arduino?id=" + DEVICE_ID + " HTTP/1.1");
       client.println("Host: snos.pl");
       client.println("Content-Type: application/text");
       client.println();
+      
       while(true) {
         char c = client.read();
         if (c == '#') {
           break;
         } else {
-          httpWToken += c;
+          httpToken += c;
         }
       }
     } else {
@@ -168,10 +149,12 @@ void setup() {
     if (client.connected()) {
       client.stop();
       isConnectedToServer = true;
-      token = httpWToken.substring(httpWToken.length()-32, httpWToken.length());
+      token = httpToken.substring(httpToken.length()-32, httpToken.length());
     }
   }
+  Serial.print("\nRecived token: ");
   Serial.println(token);
+  Serial.println();
 }
 bool Contain(String mainString, String searchedString) {
   int max = mainString.length() - searchedString.length();
@@ -182,6 +165,43 @@ bool Contain(String mainString, String searchedString) {
   return false;
 }
 void loop() {
+
+  if(loopCounter == LOOP_COUNTER_TO_RECONNECT){
+    delay(10);
+    bool isConnectedToServer = false;
+    String httpToken = "";
+    while(!isConnectedToServer) {
+      Serial.print("\nSending IP info to server");
+      if (client.connect(SERVER_IP, SERVER_PORT)) {
+        Serial.println("\nIP sended.\n");
+        client.println("GET /arduino?id=" + DEVICE_ID + " HTTP/1.1");
+        client.println("Host: snos.pl");
+        client.println("Content-Type: application/text");
+        client.println();
+      
+      while(true) {
+        char c = client.read();
+        if (c == '#') {
+          break;
+        } else {
+          httpToken += c;
+        }
+      }
+    } else {
+      Serial.println("\nUnable to connect to server.");
+      connectionsToServer = connectionsToServer + 1;
+      isConnectedToServer = false;
+      delay(100);
+    }
+    if (client.connected()) {
+      client.stop();
+      isConnectedToServer = true;
+      token = httpToken.substring(httpToken.length()-32, httpToken.length());
+    }
+  }
+    loopCounter = 0;
+  }
+  loopCounter++;
   FireSensorValue = analogRead(FireSensorPin);
   WaterSensorValue = analogRead(WaterSensorPin);
   GasSensorValue = analogRead(GasSensorPin);
@@ -196,10 +216,10 @@ void loop() {
         status = pressure.getPressure(P,T);
         if (status != 0) {
           P=P*33.885;
-        } //else //Serial.println("Error retrieving pressure.");
-      } //else //Serial.println("Error starting pressure.");
-    } //else //Serial.println("Error retrieving temperature.");
-  } //else //Serial.println("Error starting temperature.");
+        }
+      }
+    }
+  }
   ///////////////////////////////////////////////////
   if(digitalRead(PirPin1) == HIGH) {
     Pir1Value = true;
@@ -318,7 +338,7 @@ void loop() {
                 Serial.print("RGB Strip: ");
                 ledRGB_s = ledR_s+ledG_s+ledB_s;
                 Serial.print(ledRGB_s);
-                Serial.print("\n");
+                Serial.println();
                 ledR_int = ledR_s.toInt();
                 ledG_int = ledG_s.toInt();
                 ledB_int = ledB_s.toInt();
@@ -331,7 +351,7 @@ void loop() {
               client.println("Content-Type: application/json;charset=utf-8");
               client.println("Connnection: close");
               client.println();
-              client.print("{\"name\":\"arduino\",\"id\":\""+deviceID+"\",\"switches\":{\"led1\":\"");
+              client.print("{\"name\":\"arduino\",\"id\":\"" + DEVICE_ID + "\",\"switches\":{\"led1\":\"");
               client.print(led1Status);
               client.print("\",\"led2\":\"");
               client.print(led2Status);
@@ -355,7 +375,7 @@ void loop() {
               client.println("Content-Type: application/json;charset=utf-8");
               client.println("Connnection: close");
               client.println();
-              client.print("{\"name\":\"arduino\",\"id\":\""+deviceID+"\",\"sensors\":{\"fireSensor\":\"");
+              client.print("{\"name\":\"arduino\",\"id\":\"" + DEVICE_ID +"\",\"sensors\":{\"fireSensor\":\"");
               client.print(FireSensorValue);
               client.print("\",\"waterSensor\":\"");
               client.print(WaterSensorValue);
@@ -366,6 +386,7 @@ void loop() {
               client.print(Pir2Value);
               client.print(Pir3Value);
               client.print(Pir4Value);
+              //client.print("0000");
               client.print("\",\"tempInside\":\"");
               client.print(DHT11.temperature);
               client.print("\",\"humInside\":\"");
@@ -375,6 +396,7 @@ void loop() {
               client.print("\",\"pressure\":\"");
               client.print(P*0.0295333727,2);
               client.print("\"}}");
+              loopCounter = 0;
               break;
             }
           } else {
@@ -392,7 +414,6 @@ void loop() {
         }
       }
     }
-    delay(10);
     client.stop();
     readString = "";
   }
